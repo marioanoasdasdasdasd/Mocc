@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MOCC APP - Interfaz de Audio Triple Pista</title>
+    <!-- Carga de Tailwind CSS --><script src="https://cdn.tailwindcss.com"></script>
+    <!-- Se mantiene el link a Rajdhani como fallback, pero la configuración usa Arial/sans-serif -->
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        // Configuración de Tailwind para estilos y colores personalizados
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        // Se usa Arial/sans-serif por petición del usuario
+                        sans: ['Arial', 'sans-serif'],
+                    },
+                    colors: {
+                        // Paleta estricta definida por el usuario
+                        'user-bg-soft': '#b8e5ff',      // Azul Claro Nebuloso (Fondo suave)
+                        'user-text-dark': '#747ca0',    // Gris Azulado Oscuro (Texto y contraste)
+                        'user-white-pure': '#ffffff',   // Blanco Puro
+
+                        // Acento de brillo
+                        'accent-glow': '#00ffff',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Pulso suave para el brillo de cristal */
+        @keyframes pulse-soft {
+            0%, 100% {
+                box-shadow: 0 0 8px rgba(184, 229, 255, 0.8), 0 0 15px rgba(184, 229, 255, 0.4);
+            }
+            50% {
+                box-shadow: 0 0 12px rgba(184, 229, 255, 1), 0 0 25px rgba(184, 229, 255, 0.6);
+            }
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            /* Fondo Gradiente de esquina a esquina con los dos colores */
+            background:
+                radial-gradient(circle at 85% 20%, rgba(255, 255, 255, 0.2) 0%, transparent 20%),
+                radial-gradient(circle at 15% 80%, rgba(255, 255, 255, 0.2) 0%, transparent 20%),
+                linear-gradient(135deg, #747ca0 0%, #b8e5ff 100%);
+            background-size: cover;
+            background-attachment: fixed;
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+            position: relative;
+        }
+
+        body::before {
+            background: none;
+        }
+
+        .cyber-card {
+            /* ESTILO CRISTALINO/HOLOGRÁFICO SUAVE */
+            background: linear-gradient(145deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.7) 100%);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(116, 124, 160, 0.3);
+            box-shadow: 0 8px 30px rgba(116, 124, 160, 0.2), 0 0 20px rgba(255, 255, 255, 0.8) inset;
+            color: #747ca0;
+            z-index: 10;
+            position: relative;
+        }
+
+        /* * ELIMINADO .text-glass-effect
+         * El H1 ahora usa clases de Tailwind directas para un estilo "normal"
+         */
+
+        /* Estilo para los elementos interactivos */
+        .interactive-accent {
+            background-color: #b8e5ff;
+            color: #747ca0;
+            box-shadow: 0 0 15px rgba(116, 124, 160, 0.4);
+            transition: all 0.3s;
+        }
+        .interactive-accent:hover {
+             background-color: #ffffff;
+             box-shadow: 0 0 25px rgba(184, 229, 255, 1);
+        }
+
+        /* Estilos del Slider (Se mantienen aunque no se use el slider, por si se reincorpora) */
+        input[type="range"]::-webkit-slider-thumb {
+            @apply bg-user-white-pure;
+            border: 3px solid #747ca0;
+            box-shadow: 0 0 15px #b8e5ff, 0 0 25px rgba(184, 229, 255, 0.8);
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: grab;
+            -webkit-appearance: none;
+            margin-top: -10px;
+            transition: all 0.2s ease-in-out;
+            animation: pulse-soft 1.5s infinite alternate;
+        }
+        input[type="range"]::-webkit-slider-thumb:active {
+            cursor: grabbing;
+            transform: scale(1.1);
+            box-shadow: 0 0 30px #b8e5ff, 0 0 50px rgba(184, 229, 255, 1);
+        }
+        input[type="range"]::-webkit-slider-runnable-track {
+            background: linear-gradient(to right, #b8e5ff, #ffffff, #b8e5ff);
+            height: 12px;
+            border-radius: 6px;
+            box-shadow: inset 0 0 8px rgba(116, 124, 160, 0.1);
+        }
+
+        .toggle-button-glow {
+            animation: pulse-soft 1.2s infinite alternate;
+        }
+
+        /* Estilo para el input numérico */
+        #octaveInput {
+            @apply bg-user-white-pure;
+            border: 2px solid #b8e5ff;
+            color: #747ca0;
+            padding: 8px 12px;
+            text-align: center;
+            font-weight: bold;
+            box-shadow: 0 0 10px rgba(184, 229, 255, 0.5);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="app" class="w-full max-w-sm p-8 m-4 rounded-3xl transform transition duration-300 ease-in-out cyber-card
+                         hover:shadow-2xl">
+
+        <!-- TÍTULO: Ahora es una fuente normal, sólida, ancha y estéticamente centrada -->
+        <h1 class="mb-2 text-center text-user-text-dark text-5xl font-bold tracking-widest">MOCC APP</h1>
+
+        <!-- DESCRIPCIÓN 1: Actualizada -->
+        <p class="text-xl font-light mb-8 text-center text-user-text-dark">Música para volar</p>
+
+        <!-- Sección de carga de audio -->
+        <div class="mb-6">
+            <input type="file" id="audioFile" accept="audio/*" class="w-full mt-2 text-base text-user-text-dark
+                file:mr-4 file:py-3 file:px-6
+                file:rounded-full file:border-0
+                file:text-base file:font-semibold
+                interactive-accent file:bg-user-bg-soft file:text-user-text-dark
+                hover:file:bg-user-white-pure cursor-pointer transition duration-150 shadow-lg"
+            />
+        </div>
+
+        <!-- Control de Número (N) -->
+        <div class="mb-8 mt-10">
+
+            <input type="number" id="octaveInput" min="1" max="100" value="1" step="1"
+                   class="w-full rounded-xl focus:outline-none focus:ring-2 focus:ring-user-text-dark transition duration-150"
+                   placeholder="Valor N (1-100)"
+            >
+
+        </div>
+
+        <!-- Indicador de estado -->
+        <p id="statusMessage" class="text-center text-sm mb-6 h-4 text-user-text-dark transition-opacity"></p>
+
+        <!-- Botón de Reproducción/Parada -->
+        <div class="mb-8 flex justify-center">
+            <button id="toggleButton" disabled
+                class="w-full py-4 px-6 text-xl font-bold rounded-full transition duration-300 ease-in-out interactive-accent
+                       disabled:opacity-50 disabled:cursor-not-allowed shadow-xl
+                       transform hover:scale-105 toggle-button-glow"
+                onclick="togglePlayback()">
+                Cargar Audio Primero
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        // Bloque principal que se ejecuta SOLO cuando toda la página ha cargado
+        window.onload = function() {
+            // --- 1. Referencias al DOM ---
+            const statusMessage = document.getElementById('statusMessage');
+            const toggleButton = document.getElementById('toggleButton');
+            const audioFileInput = document.getElementById('audioFile');
+            const octaveInput = document.getElementById('octaveInput');
+
+            // --- 2. Variables Globales de la Aplicación ---
+            let audioContext;
+            let audioBuffer = null;
+            let isPlaying = false;
+
+            // Nodos de Audio
+            let sourceNode = null;              // Pista 1: Principal
+            let superimposedSourceNode = null;  // Pista 2: Semitono Reducido
+            let sineWaveNode = null;            // Pista 3: Onda Sinusoidal
+
+            // Nodos de Efectos Globales
+            let compressorNode = null;          // Compresor Maestro (DynamicsCompressorNode)
+
+            // --- 3. Función para mostrar mensajes de estado ---
+            function showStatus(message, isError = false) {
+                statusMessage.textContent = message;
+                statusMessage.className = `text-center text-sm mb-6 h-4 transition-opacity ${isError ? 'text-red-400 font-bold' : 'text-user-text-dark'}`;
+            }
+
+            // --- 4. Inicializar el contexto de audio y Compresor Maestro ---
+            try {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+                // Configurar el Compresor Maestro (DynamicsCompressorNode)
+                compressorNode = audioContext.createDynamicsCompressor();
+                compressorNode.threshold.value = -24; // Umbral de compresión
+                compressorNode.knee.value = 30;       // Suavidad
+                compressorNode.ratio.value = 12;      // Tasa de compresión alta
+                compressorNode.attack.value = 0.003;  // Ataque rápido
+                compressorNode.release.value = 0.25;  // Liberación moderada
+
+                // Conectar el compresor a la salida del sistema
+                compressorNode.connect(audioContext.destination);
+
+            } catch (e) {
+                console.error("Error al inicializar AudioContext o Compresor:", e);
+                showStatus('Error: Fallo al inicializar el motor de audio del navegador.', true);
+                return;
+            }
+
+
+            // --- MANEJO DE ARCHIVO ---
+            audioFileInput.addEventListener('change', (event) => {
+                if (isPlaying) {
+                    togglePlayback();
+                }
+
+                const file = event.target.files[0];
+                if (!file) return;
+
+                showStatus('Cargando y decodificando audio. Por favor, espere...', false);
+                toggleButton.disabled = true;
+                toggleButton.textContent = 'Cargando Audio...';
+
+                const reader = new FileReader();
+                reader.onload = () => {
+                    audioContext.decodeAudioData(reader.result,
+                        (buffer) => {
+                            audioBuffer = buffer;
+                            toggleButton.disabled = false;
+                            toggleButton.textContent = 'Reproducir Audio';
+                            showStatus('Audio listo. ¡Presiona Reproducir para iniciar las 3 pistas!');
+                        },
+                        (error) => {
+                            console.error('Error al decodificar audio:', error);
+                            showStatus('Error al decodificar el archivo. Asegúrate de que sea un formato válido.', true);
+                            audioBuffer = null;
+                            toggleButton.disabled = true;
+                            toggleButton.textContent = 'Cargar Audio Primero';
+                        }
+                    );
+                };
+
+                reader.onerror = (e) => {
+                    console.error('Error al leer el archivo:', e);
+                    showStatus('Error al leer el archivo. Intenta de nuevo.', true);
+                    toggleButton.disabled = true;
+                    toggleButton.textContent = 'Cargar Audio Primero';
+                };
+
+                reader.readAsArrayBuffer(file);
+            });
+
+
+            // --- CONTROL DE REPRODUCCIÓN (TRIPLE PISTA) ---
+            window.togglePlayback = function() {
+                if (audioContext && audioContext.state === 'suspended') {
+                    audioContext.resume();
+                }
+
+                if (!audioBuffer) {
+                    showStatus('Por favor, carga un archivo de audio primero.', true);
+                    return;
+                }
+
+                // Obtener y validar el valor N (Semitonos / Hz). Máximo de 100.
+                let N_value = parseFloat(octaveInput.value) || 1;
+                N_value = Math.max(1, Math.min(100, N_value)); // Asegura que N está entre 1 y 100
+                octaveInput.value = N_value; // Asegurar que el UI refleje el valor validado
+
+                // Función para detener todas las fuentes de audio
+                const stopAll = () => {
+                    // Detener Pista 1 (Principal)
+                    if (sourceNode) {
+                        try { sourceNode.stop(audioContext.currentTime + 0.01); sourceNode.disconnect(); } catch (e) { console.warn('Pista 1 ya detenida.'); }
+                        sourceNode = null;
+                    }
+                    // Detener Pista 2 (Semitono Reducido)
+                    if (superimposedSourceNode) {
+                        try { superimposedSourceNode.stop(audioContext.currentTime + 0.01); superimposedSourceNode.disconnect(); } catch (e) { console.warn('Pista 2 ya detenida.'); }
+                        superimposedSourceNode = null;
+                    }
+                    // Detener Pista 3 (Onda Sinusoidal)
+                    if (sineWaveNode) {
+                        // El oscilador debe ser detenido explícitamente
+                        try { sineWaveNode.stop(audioContext.currentTime + 0.01); sineWaveNode.disconnect(); } catch (e) { console.warn('Pista 3 ya detenida.'); }
+                        sineWaveNode = null;
+                    }
+                };
+
+                if (isPlaying) {
+                    // DETENER
+                    stopAll();
+                    isPlaying = false;
+                    toggleButton.textContent = 'Reproducir Audio';
+                    showStatus('Reproducción detenida.');
+                } else {
+                    // INICIAR
+
+                    // 1. Pista 1: Principal (Audio Original sin modificar)
+                    sourceNode = audioContext.createBufferSource();
+                    sourceNode.buffer = audioBuffer;
+                    // Conexión a la cadena de efectos (Compresor) en lugar de la salida directa
+                    sourceNode.connect(compressorNode);
+
+
+                    // 2. Pista 2: Audio Original Reducido por Semitonos (Superpuesto)
+                    superimposedSourceNode = audioContext.createBufferSource();
+                    superimposedSourceNode.buffer = audioBuffer;
+
+                    // Pitch Shift: N semitonos hacia abajo (N * -100 cents)
+                    const detuneCentsSemitone = N_value * -100;
+                    superimposedSourceNode.detune.value = detuneCentsSemitone;
+
+                    // Creación de nodos para Sonido Envolvente (Pan) y Volumen (Ganancia)
+                    const octavePanner = audioContext.createStereoPanner();
+                    const octaveGainNode = audioContext.createGain();
+
+                    // Ganancia y Paneo a la izquierda
+                    octaveGainNode.gain.value = 0.95;
+                    octavePanner.pan.value = -0.7;
+
+                    // Conexión del grafo: Fuente -> Panner -> Gain -> Compresor
+                    superimposedSourceNode.connect(octavePanner);
+                    octavePanner.connect(octaveGainNode);
+                    octaveGainNode.connect(compressorNode); // Conectar al Compresor
+
+
+                    // 3. Pista 3: Onda Sinusoidal (Pura a N Hz)
+                    sineWaveNode = audioContext.createOscillator();
+                    sineWaveNode.type = 'sine';
+                    sineWaveNode.frequency.value = N_value;
+
+                    // *** NODO DE FILTRO DE PASO ALTO ***
+                    // Elimina frecuencias muy bajas (sub-graves) para evitar distorsión en la onda pura.
+                    const sineFilter = audioContext.createBiquadFilter();
+                    sineFilter.type = "highpass";
+                    // Cortar por debajo de 30Hz si N es bajo, o usar N como referencia.
+                    sineFilter.frequency.value = Math.max(20, N_value * 1.5);
+
+                    // Creación de nodos para Sonido Envolvente (Pan) y Volumen (Ganancia)
+                    const sinePanner = audioContext.createStereoPanner();
+                    const sineGainNode = audioContext.createGain();
+
+                    // Ganancia y Paneo a la derecha
+                    sineGainNode.gain.value = 0.95;
+                    sinePanner.pan.value = 0.7;
+
+                    // Conexión del grafo: Oscilador -> Filtro -> Panner -> Gain -> Compresor
+                    sineWaveNode.connect(sineFilter); // APLICA FILTRO
+                    sineFilter.connect(sinePanner);
+                    sinePanner.connect(sineGainNode);
+                    sineGainNode.connect(compressorNode); // Conectar al Compresor
+
+                    // Iniciar todas las pistas
+                    sourceNode.start(0);
+                    superimposedSourceNode.start(0);
+                    sineWaveNode.start(0);
+
+                    isPlaying = true;
+                    toggleButton.textContent = 'Detener Reproducción';
+                    showStatus(`Reproduciendo 3 pistas con N=${N_value}. Sonido con Compresor Maestro y Filtro.`);
+
+                    // Manejar el evento cuando las pistas de audio cargado terminan (el oscilador también se detiene)
+                    sourceNode.onended = superimposedSourceNode.onended = () => {
+                        if (isPlaying) {
+                            // Detener también la onda sinusoidal (Pista 3)
+                            stopAll();
+                            isPlaying = false;
+                            toggleButton.textContent = 'Reproducir Audio';
+                            showStatus('Reproducción finalizada.');
+                        }
+                    };
+                }
+            }
+        }; // Fin de window.onload
+
+    </script>
+</body>
+</html>
